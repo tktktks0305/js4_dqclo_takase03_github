@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>利用者登録/ログイン</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="./css/01_login.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&amp;display=swap" rel="stylesheet">
+
+</head>
+<body>
+<div class="wrapper">    
+    <div id="login_logo"><img src="./imgs/logo.png" alt=""></div>
+    <div id="loginBox">
+        <div id="userInfo">
+            <div>
+                email: <input id="mailAddress" type="mailAddress" required>
+            </div>
+            <div>
+                password: <input id="loginPass" type="password" required>
+            </div>
+        </div>
+        
+        <div id="loginBtns">
+            <button id="login">ぼうけんをする</button>
+            <button id="register">ぼうけんのしょをつくる</button>
+        </div>
+        <h3 id="notes">(メモ) email: mil@mil.mil / password: milmilmil<br>「ぼうけんをする」をクリック</h3>
+    </div>
+</div>
+
+    <script>
+        $(document).ready(function() {
+            $(document.body).hide().fadeIn(3000);
+        });
+    </script>
+
+   <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        // realtimeDB
+        import { getDatabase, ref, push, set, onChildAdded, remove, onChildRemoved }
+        from "https://cdnjs.cloudflare.com/ajax/libs/firebase/9.15.0/firebase-database.js"; 
+        // authentication
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut }
+        from "https://cdnjs.cloudflare.com/ajax/libs/firebase/9.15.0/firebase-auth.js"
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "",
+            authDomain: "fir-lesson02-regapp.firebaseapp.com",
+            databaseURL: "https://fir-lesson02-regapp-default-rtdb.firebaseio.com",
+            projectId: "fir-lesson02-regapp",
+            storageBucket: "fir-lesson02-regapp.appspot.com",
+            messagingSenderId: "380047633058",
+            appId: "1:380047633058:web:0cab28e340cfe988fb05fb"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // 新規登録
+        $("#register").on("click", function(){
+            const mailAddress = $("#mailAddress").val();
+            const loginPass = $("#loginPass").val();
+        
+            createUserWithEmailAndPassword(auth, mailAddress, loginPass)
+                .then((userCredential) => {
+                    // Signed in 
+                    const user = userCredential.user;
+                    // ...
+                    alert("新規登録完了。そうび品登録画面に移ります");
+                    location.href = "./02_itemRegistration.html"
+                })
+                .catch((error) => {
+                    const errorCode = error.code;
+                    const errorMessage = error.message;
+                    // ..
+                    alert(errorMessage);
+                });
+        });
+
+        $("#login").on("click", function(){
+            const mailAddress = $("#mailAddress").val();
+            const loginPass = $("#loginPass").val();
+        
+            signInWithEmailAndPassword(auth, mailAddress, loginPass)
+                .then((userCredential) => {
+                    // Signed in 
+                    const user = userCredential.user;
+                    // ...
+                    alert("そうび品登録画面に移ります");
+                    location.href = "./02_itemRegistration.html"
+                })
+                .catch((error) => {
+                    const errorCode = error.code;
+                    const errorMessage = error.message;
+                    // ..
+                    alert(errorMessage);
+                });
+        });
+    </script>
+
+</body>
+</html>

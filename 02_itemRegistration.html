@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>どうぐ登録</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="./css/02_itemRegistration.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&amp;display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div id="wrapper">
+    <!-- 上部メニュー -->
+    <header>
+        <div>
+            <img src="./imgs/logo.png" alt="logo">
+        </div>
+        <nav>
+            <ul class="menu">
+                <li><p><a href="./03_coordinate.html">そうびページへ</a></p></li>
+                <li><p class="logout">ぼうけんをやめる</p></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div id="reg_wrapper">
+        <!-- 登録フォーム ここから-->
+        <div id="reg_form">
+                <table id="reg_table">
+                    <!-- 名前 -->
+                    <tr id="box_iName"><th>名称</th><td><input id="iName" type="text" placeholder="皮のぼうし" required></td> <td><button type="submit" id="imgSearch">さがす→</button></td></tr>
+                    <!-- カテゴリ -->
+                    <tr id="box_category">
+                        <th>カテゴリ</th>
+                        <td>
+                            <select name="category" id="category">
+                                <option value="1">あたま</option>
+                                <option value="2">からだ</option>
+                                <option value="3">みぎて（ぶき）</option>
+                                <option value="4">ひだりて（たて）</option>
+                                <option value="5">アクセサリー</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <!-- 購入価格 -->
+                    <tr id="box_price"><th>購入価格</th><td><input id="price" type="number" placeholder="10,000" required></td></tr>
+                    <!-- 購入時期 -->
+                    <tr id="box_when"><th>購入時期</th><td><input id="when" type="month" required></td></tr>
+                    <!-- 詳細 -->
+                    <tr><th>詳細</th><td><textarea name="details" placeholder="コメントを入力" id="description" rows="4"></textarea></td></tr>
+                    <!-- 画像URL取得用ボックス -->
+                    <tr id="box_imgurl"><th>画像</th><td id="dispurltd"></td></tr>
+
+                </table>
+                <input type="submit" value="登録" id="reg_send"></a><br>
+        </div>
+        <!-- 登録フォーム　ここまで -->
+        <!-- 画像表示 -->
+        <div id="imageArea"><ul id="imgList"></ul></div>
+    </div>
+
+    <!-- 登録したアイテム表示 -->
+    <div id="item_list">
+    </div>
+
+    <footer>
+        <small>Supported by Google Custom Search API</small>
+    </footer>
+    
+</div>
+
+    <script>
+        $(document).ready(function() {
+            $(document.body).hide().fadeIn(3000);
+        });
+    </script>
+
+    <!-- 画像検索 google custom search api-->
+    <script>
+        const searchapikey = "";
+        const searchid = "";
+
+        $("#imgSearch").on("click", function(){
+            let keyWord = $("#iName").val(); 
+            $.getJSON(`https://www.googleapis.com/customsearch/v1?key=${searchapikey}&cx=${searchid}&q=${keyWord}&hl=ja&searchType=image`, function(data){
+                let imgView = "";
+                for(let i = 0; i<10; i++){
+                    imgView += `<img src="${data.items[i].link}" alt="./imgs/no_image.jpg" class="imgforreg">`; //どの階層が配列になっているのかちゃんとdata構造見て確認すること。
+                };
+                // console.log(data);
+                // console.log(imgView);
+                $("#imgList").append(imgView);
+            });
+        });
+        
+        $(document).on("click", ".imgforreg", function(){
+            let url = $(this).attr("src");
+            console.log(url);
+            let dispurl = `<input id="imgurl" type="text" value="${url}">`
+            $("#dispurltd").append(dispurl);
+        })
+    </script>
+
+
+    <!-- Firebase -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+        import { getDatabase, ref, push, set, onChildAdded, remove, onChildRemoved }
+        from "https://cdnjs.cloudflare.com/ajax/libs/firebase/9.15.0/firebase-database.js"; 
+
+        // authentication
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut }
+        from "https://cdnjs.cloudflare.com/ajax/libs/firebase/9.15.0/firebase-auth.js"
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "",
+            authDomain: "fir-lesson02-regapp.firebaseapp.com",
+            databaseURL: "https://fir-lesson02-regapp-default-rtdb.firebaseio.com",
+            projectId: "fir-lesson02-regapp",
+            storageBucket: "fir-lesson02-regapp.appspot.com",
+            messagingSenderId: "380047633058",
+            appId: "1:380047633058:web:0cab28e340cfe988fb05fb"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const dbRegRef = ref(db, "registration");
+
+
+         // データ登録
+        $("#reg_send").on("click", function(){
+            const item = {
+                iName: $("#iName").val(),
+                category: $("#category").val(),
+                price: $("#price").val(),
+                when: $("#when").val(),
+                description: $("#description").val(),
+                imgurl: $("#imgurl").val()
+            };
+            const newRegRef = push(dbRegRef); 
+            set(newRegRef, item);
+            // $("#iName").val(""); 
+            // $("#category").val(""); 
+            // $("#price").val(""); 
+            // $("#when").val(""); 
+            // $("#description").val("");
+            // $("#imgurl").val("");
+            // $("#dispurltd").remove("#imgurl");
+            alert("登録完了!");
+            location.reload(); //追加されたinput textをうまく消せないので、リロードにした。
+            // 埋まってないと送信できないようにしたいが、if文しかないのか？5つ書くのは面倒。。。
+        
+        });
+
+        // 登録済みアイテム表示
+        onChildAdded(dbRegRef, function(data){
+            const item = data.val();
+            const key = data.key;
+            console.log(data);
+            let box = `<div class="item_box">
+                            <p id="${key}" class="delete"><img src ="./imgs/delete.png" class="delete_btn" alt="X"></p>
+                            <table>
+                                <tr><th>カテゴリ</th><td>${item.category}</td></tr>
+                                <tr><th>名称</th><td>${item.iName}</td></tr>
+                                <tr><th>購入価格</th><td>${item.price}</td></tr>
+                                <tr><th>購入時期</th><td>${item.when}</td></tr>
+                                <tr><th>詳細</th><td>${item.description}</td></tr>
+                            </table>
+                            <div><img src="${item.imgurl}" alt="itemimg"></div>
+                        </div>`
+            $("#item_list").append(box);
+        });
+
+        $(document).on("click", ".delete", function(){ 
+        let value = $(this).attr("id");
+        const dbRefDel = ref(db, `registration/${value}`)
+        remove(dbRefDel);
+        $(this).parent().remove();
+        });
+
+        // ログアウト
+        const auth = getAuth();
+
+        $(".logout").on("click", function(){
+            signOut(auth).then(() => {
+            // Sign-out successful.
+            location.href = "./01_login.html"
+            alert("ログイン画面に戻ります");
+            }).catch((error) => {
+            // An error happened.
+            alert("error");
+            });
+        })
+
+    </script>
+</body>
+</html>

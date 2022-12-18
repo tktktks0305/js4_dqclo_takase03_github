@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>コーディネート</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="./css/03_coordinate.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&amp;display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div id="wrapper">
+    <!-- 上部メニュー -->
+    <header>
+        <div>
+            <img src="./imgs/logo.png" alt="logo">
+        </div>
+        <nav>
+            <ul class="menu">
+                <li><p><a href="./02_itemRegistration.html">どうぐ登録ページへ</a></p></li>
+                <li><p class="logout">ぼうけんをやめる</p></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- 装備登録エリア -->
+    <div id="reg_wrapper">
+        <table class="coordinate_table">
+            <tr class="box_hood"><th>あたま</th><td><select name="hood" id="hood"><option></option></select></td></tr>
+            <tr class="box_wholebody"><th>からだ</th><td><select name="wholebody" id="wholebody"><option></option></select></td></tr>
+            <tr class="box_rightHand"><th>みぎて（ぶき）</th><td><select name="rightHand" id="rightHand"><option></option></select></td></tr>
+            <tr class="box_leftHand"><th>ひだりて（たて）</th><td><select name="leftHand" id="leftHand"><option></option></select></td></tr>
+            <tr class="box_accessory"><th>アクセサリー</th><td><select name="accessory" id="accessory"><option></option></select></td></tr>
+            <tr><th><td><input type="submit" value="そうびを保存" id="saveCoordinate"></td></th></tr>
+        </table>
+        
+        <div class="comment">本当は、選んだアイテムに応じてこのエリアに画像や価格等の情報を表示させたかった。。。</div>
+    </div>
+    <!-- 登録装備一覧表示エリア -->
+    <div id="coordinate_list"></div>
+    
+    <footer>
+        <small>Supported by Firebase</small>
+    </footer>
+</div>
+
+    <script>
+        $(document).ready(function() {
+            $(document.body).hide().fadeIn(3000);
+        });
+    </script>
+
+    <!-- Firebase コーディネート表示用 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        // realtime DB
+        import { getDatabase, ref, push, set, onChildAdded, remove, onChildRemoved }
+        from "https://cdnjs.cloudflare.com/ajax/libs/firebase/9.15.0/firebase-database.js"; 
+        // authentication
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut }
+        from "https://cdnjs.cloudflare.com/ajax/libs/firebase/9.15.0/firebase-auth.js"
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "",
+            authDomain: "fir-lesson02-regapp.firebaseapp.com",
+            databaseURL: "https://fir-lesson02-regapp-default-rtdb.firebaseio.com",
+            projectId: "fir-lesson02-regapp",
+            storageBucket: "fir-lesson02-regapp.appspot.com",
+            messagingSenderId: "380047633058",
+            appId: "1:380047633058:web:0cab28e340cfe988fb05fb"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const dbRegRef = ref(db, "registration");
+
+        // 各カテゴリ別にiNameを取得してセレクトボックスに表示するHTMLを書く
+        onChildAdded(dbRegRef, function(data){
+            const item = data.val();
+            const key = data.key;
+
+            let n ="";
+            n += `<option id="${key}">${item.iName}</option>`
+            if(item.category == 1){
+                $("#hood").append(n);
+            }else if(item.category == 2){
+                $("#wholebody").append(n);
+            }else if(item.category == 3){
+                $("#rightHand").append(n);
+            }else if(item.category == 4){
+                $("#leftHand").append(n);
+            }else{
+                $("#accessory").append(n);
+            };
+
+        });
+
+        // $("#hood").change(function(){
+        //         let selectedKey = $("option:selected").attr("id");
+        //         console.log(selectedKey);
+        //         const dbRefPrice = ref(db, `registration/${selectedKey}`);
+        //         let price = $(dbRefPrice/price).get();
+        //         console.log(price);
+        // });
+
+
+        // <!-- コーディネート登録用 -->
+
+        const app2 = initializeApp(firebaseConfig);
+        const db2 = getDatabase(app2);
+        const dbCooRef = ref(db, "saveCoordinate");
+        
+        // コーディネート登録
+        $("#saveCoordinate").on("click", function(){
+            const coordinate ={
+                hood: $("#hood").val(),
+                wholebody: $("#wholebody").val(),
+                rightHand: $("#rightHand").val(),
+                leftHand: $("#leftHand").val(),
+                accessory: $("#accessory").val(),
+                saveTime: new Date().toUTCString()
+            };
+            const newCooRef = push(dbCooRef);
+            set(newCooRef, coordinate);
+            alert("保存完了!");
+            location.reload();
+        });
+
+        onChildAdded(dbCooRef, function(data){
+            const coordinate = data.val();
+            const key = data.key;
+            let box = `<div class="coordinate_box">
+                            <p id="${key}" class="delete"><img src ="./imgs/delete.png" class="delete_btn" alt="X"></p>
+                            <p>作成日時: ${coordinate.saveTime}</p>
+                            <table>
+                                <tr><th>あたま</th><td>${coordinate.hood}</td></tr>
+                                <tr><th>からだ</th><td>${coordinate.wholebody}</td></tr>
+                                <tr><th>みぎて（ぶき）</th><td>${coordinate.rightHand}</td></tr>
+                                <tr><th>ひだりて（たて）</th><td>${coordinate.leftHand}</td></tr>
+                                <tr><th>アクセサリー</th><td>${coordinate.accessory}</td></tr>
+                            </table>
+                        </div>`
+            $("#coordinate_list").append(box);
+        });
+
+        $(document).on("click", ".delete", function(){ 
+        let value = $(this).attr("id");
+        const dbCooDel = ref(db, `saveCoordinate/${value}`)
+        remove(dbCooDel);
+        $(this).parent().remove();
+        });
+
+        // ログアウト
+        const auth = getAuth();
+
+        $(".logout").on("click", function(){
+        signOut(auth).then(() => {
+        // Sign-out successful.
+        location.href = "./01_login.html"
+        alert("ログイン画面に戻ります");
+        }).catch((error) => {
+        // An error happened.
+        alert("error");
+        });
+        })
+    </script>
+
+
+</body>
+</html>
